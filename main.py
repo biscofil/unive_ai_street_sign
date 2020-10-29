@@ -29,7 +29,7 @@ if __name__ == '__main__':
         'weight_decay': 0.001,
         'batch_size': 8,
         'epochs': 10,
-        'device': 'cpu',  # 'cuda:0',
+        'device': 'cuda:0',
         'seed': 314
     }
 

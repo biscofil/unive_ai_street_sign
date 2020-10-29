@@ -24,7 +24,7 @@ class StreetSignDataset(Dataset):
                     with open(full_path) as csv_file:
                         csv_reader = csv.DictReader(csv_file, delimiter=';', quoting=csv.QUOTE_NONE)
                         images = list(csv_reader)
-                        labels.append(images[0]["ClassId"])
+                        labels.append(int(images[0]["ClassId"]))
                         for image in images:
                             image["Filename"] = root + "/" + image["Filename"]
                             # print(int(image["Roi.X2"]) - int(image["Roi.X1"]),

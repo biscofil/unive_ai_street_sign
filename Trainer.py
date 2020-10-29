@@ -1,7 +1,5 @@
-import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
 
 
 class Trainer(object):
@@ -30,7 +28,7 @@ class Trainer(object):
                 output = self.softmax(self.model(images))
                 loss = self.criterion(output, labels)
                 loss.backward()  # compute the derivatives of the model
-                optim.step()  # update weights according to the optimizer
+                self.optimizer.step()  # update weights according to the optimizer
 
             print('Accuracy at epoch {}: {}'.format(epoch + 1, self.evaluate()))
 
