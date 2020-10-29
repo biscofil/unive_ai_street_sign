@@ -7,7 +7,6 @@ from torch.utils.data import Dataset
 
 
 class StreetSignDataset(Dataset):
-    """Face Landmarks dataset."""
 
     def __init__(self, base_path="./GTSRB-Training_fixed/GTSRB/Training", transform=None):
         self.transform = transform
@@ -27,8 +26,6 @@ class StreetSignDataset(Dataset):
                         labels.append(int(images[0]["ClassId"]))
                         for image in images:
                             image["Filename"] = root + "/" + image["Filename"]
-                            # print(int(image["Roi.X2"]) - int(image["Roi.X1"]),
-                            #      int(image["Roi.Y2"]) - int(image["Roi.Y1"]))
                             out.append(image)
         print(len(labels), "labels")
         print(labels)
@@ -45,7 +42,6 @@ class StreetSignDataset(Dataset):
         image_filename = image["Filename"]
         image_data = Image.open(image_filename)
 
-        # Crop
         upper = int(image["Roi.Y1"])
         lower = int(image["Roi.Y2"])
         left = int(image["Roi.X1"])

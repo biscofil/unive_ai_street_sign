@@ -44,3 +44,6 @@ class Trainer(object):
             total += (predicted == labels).sum().item()
 
         return total / len(self.test_loader.dataset)
+
+    def save(self):
+        torch.save(self.model.state_dict(), 'model')

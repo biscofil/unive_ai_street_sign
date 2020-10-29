@@ -5,7 +5,7 @@ class FCANN(nn.Module):
 
     def __init__(self, img_size: int):
         super().__init__()
-        self.lin1 = nn.Linear(img_size * img_size * 3, 1024)  # TODO change input shape
+        self.lin1 = nn.Linear(img_size * img_size * 3, 1024)
         self.bn1 = nn.BatchNorm1d(1024)
         self.lin2 = nn.Linear(1024, 1024)
         self.bn2 = nn.BatchNorm1d(1024)

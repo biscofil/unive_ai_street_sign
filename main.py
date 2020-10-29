@@ -13,16 +13,6 @@ from custom_transformations.CustomToTensor import CustomToTensor
 
 if __name__ == '__main__':
 
-    # fig = plt.figure()
-    # for i in range(len(face_dataset)):
-    #     sample = face_dataset[i]
-    #     print(i, sample['image']['Filename'])
-    #     im = sample['image_data']
-    #     plt.imshow(im)
-    #     plt.show()
-    #     plt.clf()  # will make the plot window empty
-    #     im.close()
-
     config = {
         'lr': 1e-4,
         'momentum': 0.9,
@@ -61,7 +51,9 @@ if __name__ == '__main__':
 
     model = FCANN(img_size)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=1e-4, momentum=0.9, weight_decay=0.001)
+    optimizer = optim.SGD(model.parameters(), lr=config['lr'], momentum=config['momentum'],
+                          weight_decay=config['weight_decay'])
 
     trainer = Trainer(model, config['device'], train_loader, test_loader, criterion, optimizer)
-    trainer.train(epochs=10)
+    trainer.train(epochs=config['epochs'])
+    trainer.save()
