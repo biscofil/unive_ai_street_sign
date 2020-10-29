@@ -6,12 +6,60 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 
+# http://benchmark.ini.rub.de/?section=gtsdb&subsection=dataset
+
 class StreetSignDataset(Dataset):
 
     def __init__(self, base_path="./GTSRB-Training_fixed/GTSRB/Training", transform=None):
         self.transform = transform
         self.base_path = base_path
         self.images = self.get_images()
+
+        self.labels = {
+            '20kmh',  # 0000
+            '30kmh',
+            '50kmh',
+            '60kmh',
+            '70kmh',
+            '80kmh',
+            'end_80kmh',
+            '100kmh',
+            '120kmh',
+            'no_passing',
+            'no_passing_for_vehicles_3mt+',  # 0010
+            'intersection',
+            'priority_road',
+            'yield',
+            'stop',
+            'no_vehicles',
+            'no_vehicle_3mt+',
+            'no_entry',
+            'general_caution',
+            'dangerous_left_curve',
+            'dangerous_right_curve',  # 0020
+            'double_curve',
+            'bumpy_road',
+            'slippery_road',
+            'left_narrowing'
+            'man_at_work',
+            'traffic_light',
+            'zebra_crossing'
+            'children_crossing',
+            'bicycle_crossing',
+            'ice_snow',  # 0030
+            'wild_animals',
+            'end_speed_limit',
+            'turn_right_ahead',
+            'turn_left_ahead',
+            'ahead_only',
+            'straight_or_right',
+            'straight_or_left',
+            'keep_right',
+            'keep_left',
+            'roundabout',  # 0040
+            'end_no_passing',
+            'end_no_passing_for_vehicles_3mt+',
+        }
 
     def get_images(self):
         out = []
@@ -28,6 +76,7 @@ class StreetSignDataset(Dataset):
                             image["Filename"] = root + "/" + image["Filename"]
                             out.append(image)
         print(len(labels), "labels")
+        labels = sorted(labels)
         print(labels)
         return out
 
