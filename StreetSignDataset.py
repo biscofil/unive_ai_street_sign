@@ -13,9 +13,7 @@ class StreetSignDataset(Dataset):
     def __init__(self, base_path="./GTSRB-Training_fixed/GTSRB/Training", transform=None):
         self.transform = transform
         self.base_path = base_path
-        self.images = self.get_images()
-
-        self.labels = {
+        self.label_names = [
             '20kmh',  # 0000
             '30kmh',
             '50kmh',
@@ -40,10 +38,10 @@ class StreetSignDataset(Dataset):
             'double_curve',
             'bumpy_road',
             'slippery_road',
-            'left_narrowing'
+            'left_narrowing',
             'man_at_work',
             'traffic_light',
-            'zebra_crossing'
+            'zebra_crossing',
             'children_crossing',
             'bicycle_crossing',
             'ice_snow',  # 0030
@@ -58,8 +56,9 @@ class StreetSignDataset(Dataset):
             'keep_left',
             'roundabout',  # 0040
             'end_no_passing',
-            'end_no_passing_for_vehicles_3mt+',
-        }
+            'end_no_passing_for_vehicles_3mt+'
+        ]
+        self.images = self.get_images()
 
     def get_images(self):
         out = []
@@ -75,9 +74,7 @@ class StreetSignDataset(Dataset):
                         for image in images:
                             image["Filename"] = root + "/" + image["Filename"]
                             out.append(image)
-        print(len(labels), "labels")
-        labels = sorted(labels)
-        print(labels)
+        assert (len(self.label_names) == len(labels))
         return out
 
     def __len__(self):
