@@ -1,5 +1,7 @@
 ignore
 .idea/
-GTSRB-Training_fixed/
+src/dataset/GTSRB-Training_fixed/
+src/dataset/TSRD/
 ignore/
 venv/
+/src/dataset/new/
