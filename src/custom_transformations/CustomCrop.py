@@ -1,9 +1,13 @@
+from PIL import Image
+
+
 class CustomCrop(object):
 
-    def __call__(self, sample: dict) -> dict:
+    def __call__(self, sample: dict) -> Image:
+        image: Image = sample['image']
 
-        image = sample['image'].crop(sample['rect'])
+        if sample['rect'] is not None:
+            left, upper, right, lower = sample['rect']
+            image = image.crop((left, upper, right, lower))
 
-        return {
-            "image": image
-        }
+        return image
