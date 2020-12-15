@@ -61,7 +61,7 @@ class BootStrapper:
                 print("Error loading ", full_filepath)
                 continue
 
-            label_idx = model.get_image_label(im)
+            label_idx,_ = model.get_image_label(im)
             if not label_idx == GTSRBDatasetWithNegatives.STREET_SIGN_LABEL_IDX:
                 wrongly_classified.append(name)
 

@@ -114,12 +114,26 @@ class GTSRBDataset(Dataset):
     def get_training_evaluation_datasets(transformation_cascade, augmentation_operations,
                                          training_fraction: float = 0.7):  # TODO check
 
-        full_dataset = GTSRBDataset(
-            transformation_cascade=transformation_cascade,
-            augmentation_operations=augmentation_operations)
+        if False:
+            full_dataset = GTSRBDataset(
+                transformation_cascade=transformation_cascade,
+                augmentation_operations=augmentation_operations)
 
-        n: int = len(full_dataset)
-        n_train_img: int = int(n * training_fraction)
-        n_val_img: int = n - n_train_img
+            n: int = len(full_dataset)
+            n_train_img: int = int(n * training_fraction)
+            n_val_img: int = n - n_train_img
 
-        return random_split(full_dataset, (n_train_img, n_val_img))
+            return random_split(full_dataset, (n_train_img, n_val_img))
+
+        else:
+
+            training_set = GTSRBDataset(
+                transformation_cascade=transformation_cascade,
+                augmentation_operations=augmentation_operations)
+
+            test_set = GTSRBDataset(
+                evaluation=True,
+                transformation_cascade=transformation_cascade,
+                augmentation_operations=augmentation_operations)
+
+            return training_set, test_set

@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from PIL import Image
 from torch import Tensor
-from torch.autograd import Variable
 from torchvision import transforms
 from torchvision.transforms import ToTensor
 
@@ -12,32 +11,30 @@ from src.custom_transformations.AugFlip import AugFlip
 from src.custom_transformations.AugMirror import AugMirror
 from src.custom_transformations.AugMoveCroppingRect import AugMoveCroppingRect
 from src.custom_transformations.AugRotate import AugRotate
-from src.custom_transformations.Bypass import Bypass
 from src.custom_transformations.CustomCrop import CustomCrop
 from src.custom_transformations.CustomRescale import CustomRescale
-from src.custom_transformations.CustomToGrayScale import CustomToGrayScale
+from src.custom_transformations.NormalizeHist import NormalizeHist
 from src.dataset.GTSRBDatasetWithNegatives import GTSRBDatasetWithNegatives
 from src.networks.Trainer import Trainer
 from src.networks.utils.NNTrainLoadSave import NNTrainLoadSave
 
 
 class CnnDetector(NNTrainLoadSave):
-    IMG_SIZE: int = 28
+    PATCH_SIZE: int = 28
 
-    def __init__(self, device_name: str, use_rgb: bool = True):
+    def __init__(self, device_name: str):
         super().__init__('detector.pt')
 
         self.device_name = device_name
         self.device = torch.device(device_name)
-        self.use_rgb = use_rgb
 
         fe_conv_a_channels = 15  # features
         fe_conv_b_channels = 30  # features
-        fe_conv_c_channels = 45  # features
+        fe_conv_c_channels = 35  # features
 
         self.feature_extractor = nn.Sequential(
 
-            nn.Conv2d(3 if self.use_rgb else 1, fe_conv_a_channels, 3, padding=1),
+            nn.Conv2d(3, fe_conv_a_channels, 3, padding=1),
             nn.ReLU(),
             nn.BatchNorm2d(fe_conv_a_channels),
             nn.MaxPool2d(2),
@@ -58,11 +55,11 @@ class CnnDetector(NNTrainLoadSave):
         )
 
         n2: int = 200
-        n3: int = 200
+        n3: int = 100
         output_size: int = len(GTSRBDatasetWithNegatives.get_label_names())
 
         self.classifier = nn.Sequential(
-            nn.Linear(720, n2),
+            nn.Linear(560, n2),
             nn.ReLU(),
             nn.BatchNorm1d(n2),
 
@@ -97,18 +94,17 @@ class CnnDetector(NNTrainLoadSave):
                     epochs: int = 10) -> None:
 
         print("Training CnnDetector model...")
-        print("\tImg size :", self.IMG_SIZE)
+        print("\tImg size :", self.PATCH_SIZE)
 
         pos_transformation_cascade = transforms.Compose([
             # --> {"image": PIL, "rect": rect} -->
             AugMoveCroppingRect(),  # --> {"image": PIL, "rect": rect} -->
             CustomCrop(),  # --> cropped PIL -->
-            CustomRescale(self.IMG_SIZE),  # --> square img_size x img_size PIL -->
+            CustomRescale(self.PATCH_SIZE),  # --> square img_size x img_size PIL -->
             # DebugImage('before_norm.png'),
-            # NormalizeHist(),  # TODO BAD
-            Bypass() if self.use_rgb else CustomToGrayScale(),  # --> square grayscale img_size x img_size PIL -->
+            NormalizeHist(),
+            # Bypass() if self.use_rgb else CustomToGrayScale(),  # --> square grayscale img_size x img_size PIL -->
             transforms.ToTensor(),  # --> Tensor -->
-            # FixTensorBrightnessContrast(),  # TODO BAD
             # torchvision.transforms.Normalize(mean=0.5, std=0.2),
             # DebugImage('after_norm.png', exit=True),
         ])
@@ -116,7 +112,7 @@ class CnnDetector(NNTrainLoadSave):
         neg_transformation_cascade = transforms.Compose([
             # {"image": PIL, "rect": rect}
             CustomCrop(),  # --> cropped PIL -->
-            CustomRescale(self.IMG_SIZE),  # --> square img_size x img_size PIL -->
+            CustomRescale(self.PATCH_SIZE),  # --> square img_size x img_size PIL -->
             # Augmentation([
             #     None,
             #     [AugRotate(90), AugColor(random.randint(3, 7) / 10.0)],
@@ -172,10 +168,10 @@ class CnnDetector(NNTrainLoadSave):
                           nn.CrossEntropyLoss())
         trainer.train(epochs)
 
-    def get_image_label(self, img: Image, resize: bool = True) -> int:
+    def get_image_label(self, img: Image, resize: bool = True) -> (int, float):
         if resize:
             # scale
-            cs = CustomRescale(self.IMG_SIZE)
+            cs = CustomRescale(self.PATCH_SIZE)
             img = cs(img)
         # grayscale
         # window = (CustomToGrayScale())(window)
@@ -186,13 +182,11 @@ class CnnDetector(NNTrainLoadSave):
         # image_tensor = (PreFixBrightnessContrast())(image_tensor)
         return self.get_tensor_label(image_tensor)
 
-    def get_tensor_label(self, tensor: Tensor) -> int:
+    def get_tensor_label(self, tensor: Tensor) -> (int, float):
         # run model
-        nn_input = Variable(tensor)
-        nn_input = nn_input.to(self.device)
-        return self.get_variable_label(nn_input)
-
-    def get_variable_label(self, nn_input) -> int:
-        output = self(nn_input)
+        self.eval()
+        tensor = tensor.to(self.device).detach()
+        output = self(tensor)
         dist = (nn.Softmax(dim=1))(output)
-        return dist.data.cpu().numpy().argmax()
+        # return dist.data.cpu().numpy().argmax(axis=1), dist.data.cpu().numpy().max(axis=1)
+        return torch.argmax(dist, dim=1).cpu().tolist(), (torch.max(dist, dim=1)[0]).cpu().tolist()

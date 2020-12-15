@@ -47,7 +47,7 @@ class GTSRBDatasetWithNegatives(GTSRBDataset):
         ]
         return labels
 
-    def __get_images(self) -> list:
+    def get_images(self) -> list:
 
         # ############# positive_images
         out = super().get_images()
@@ -90,17 +90,17 @@ class GTSRBDatasetWithNegatives(GTSRBDataset):
 
         return out
 
-    def __len__(self):
-        # TODO check
-        return super().__len__() * 2
-
-    def __getitem__(self, index):
-        if index < super().__len__():
-            tensor, label = super().__getitem__(index)
-            return tensor, self.STREET_SIGN_LABEL_IDX
-        else:
-            n = 28
-            return torch.rand(3, n, n), self.NO_STREET_SIGN_LABEL_IDX
+    # def __len__(self):
+    #     # TODO check
+    #     return super().__len__() * 2
+    #
+    # def __getitem__(self, index):
+    #     if index < super().__len__():
+    #         tensor, label = super().__getitem__(index)
+    #         return tensor, self.STREET_SIGN_LABEL_IDX
+    #     else:
+    #         n = 28
+    #         return torch.rand(3, n, n), self.NO_STREET_SIGN_LABEL_IDX
 
     @staticmethod
     def add_images_to_negative_examples_json(filenames: list, overwrite: bool):
@@ -114,7 +114,8 @@ class GTSRBDatasetWithNegatives(GTSRBDataset):
 
         random.shuffle(filenames)
 
-        os.remove(GTSRBDatasetWithNegatives.NEGATIVE_JSON)
+        if os.path.isfile(GTSRBDatasetWithNegatives.NEGATIVE_JSON):
+            os.remove(GTSRBDatasetWithNegatives.NEGATIVE_JSON)
 
         print("Saving {} negative examples to {}".format(len(filenames),
                                                          GTSRBDatasetWithNegatives.NEGATIVE_JSON))

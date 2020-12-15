@@ -1,48 +1,32 @@
 import torch
-from PIL import Image
-from torch import Tensor
-from torchvision.transforms import ToTensor
-
-from src.networks.CnnDetector import CnnDetector
+from torch import Tensor, nn
 
 
-class CnnDetectorWithSlidingWindow(CnnDetector):
+class CnnDetectorWithSlidingWindow(object):
 
-    def __init__(self, device_name: str, patch_size: int = 28, patch_stride: int = 10):
-        super().__init__(device_name)
+    def __init__(self, model: nn.Module, device_name: str, patch_size: int, patch_stride: int):
+        super().__init__()
+        self.device = device_name
         self.patch_size = patch_size
         self.patch_stride = patch_stride
+        self.model = model
 
-    def forward(self, x):
+    def unfold_and_classify(self, x: Tensor) -> (list, list):
+        x.detach()
+        c, h, w = x.shape
 
-        x = x.unfold(1, self.patch_size, self.patch_stride) \
-            .unfold(2, self.patch_size, self.patch_stride) \
-            .unfold(3, self.patch_size, self.patch_stride)
+        x = x.detach()
+        patches = x.permute(1, 2, 0) \
+            .unfold(0, self.patch_size, self.patch_stride) \
+            .unfold(1, self.patch_size, self.patch_stride) \
+            .reshape(-1, c, self.patch_size, self.patch_size)
 
-        x = x.contiguous().view(-1, 3, self.patch_size, self.patch_size)
-
-        x = self.feature_extractor(x)
-
-        n, c, h, w = x.shape
-        x = x.view(n, -1)
-
-        if False:  # TODO remove
-            print(x.shape)
-            exit(1)
-
-        try:
-            x = self.classifier(x)
-        except:
-            print("feature extractor returns unexpected structure with shape", x.shape)
-            exit(1)
-
-        x = torch.softmax(x, dim=0)
-
-        # return labels, score
-        return torch.argmax(x, dim=1), torch.max(x, dim=1)[0]
-
-    def run_sliding_window(self, img: Image) -> (list, list):
-        image_tensor: Tensor = (ToTensor())(img).float()
-        image_tensor = image_tensor.to(self.device)
-        labels, scores = self(image_tensor)
-        return labels.tolist(), scores.tolist()
+        # split into batches
+        patch_batches = torch.split(patches, 400, dim=1)
+        labels = []
+        scores = []
+        for patch_batch in patch_batches:
+            l, s = self.model.get_tensor_label(patch_batch)  # TODO check +200MB
+            labels += l
+            scores += s
+        return labels, scores
