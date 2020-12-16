@@ -23,7 +23,6 @@ class SlidingWindow(object):
         # w_range = list(range(min_w, int(original_w), delta_w))
 
         rng = [min_h + (max_h - min_h) / n_res * r for r in range(0, n_res, 1)]
-        # rng = list(range(min_w, int(original_w / 4), delta_w))  # TODO change here
 
         ratio_range = [h / original_h for h in rng]
 
@@ -58,7 +57,6 @@ class SlidingWindow(object):
         labels = []
         scores = []
         for patch_batch in patch_batches:
-            # TODO preprocessing on tensors, maybe directly in the model?
             l, s = self.model.get_tensor_label(patch_batch)
             labels += l
             scores += s

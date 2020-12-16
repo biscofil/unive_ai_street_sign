@@ -98,16 +98,12 @@ class GTSRBDataset(Dataset):
         return os.path.dirname(__file__) + "/GTSRB_Negative/images_{}.json".format(
             "test" if test else "training")
 
-    def get_not_street_sign_images(self) -> list:
+    def get_not_street_sign_images(self, random_images: int = 1000) -> list:
 
         out = []
 
         with open(self.get_not_street_sign_json_list(self.test), 'r') as fp:
             negative_filenames = json.load(fp)
-
-        # load for training  / test (same amount as positive examples)
-        # n_train_img = int(len(negative_filenames) * train_fraction)  # TODO check
-        # negative_filenames = negative_filenames[n_train_img:] if self.test else negative_filenames[:n_train_img]
 
         base_path: str = os.path.dirname(__file__) + "/GTSRB_Negative/images/"
         n_negative_examples = 0
@@ -127,7 +123,7 @@ class GTSRBDataset(Dataset):
                                       class_id=GTSRBDataset.NO_STREET_SIGN_LABEL_IDX,
                                       cropping_rect=None))
 
-        for i in range(0, 1000):  # random noise
+        for i in range(0, random_images):  # random noise
             out.append(ImageAsset("",
                                   augmentation_operations=[],
                                   class_id=GTSRBDataset.NO_STREET_SIGN_LABEL_IDX,

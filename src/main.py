@@ -1,4 +1,3 @@
-import argparse
 import os
 import random
 
@@ -151,34 +150,13 @@ def eval_img(filepath: str, font=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.3, color=
 
 
 if __name__ == '__main__':
-
-    train_classifier()
-    exit(1)
+    # train_classifier()
 
     # bootstrap()
     # train_classifier_bootstrap()
-    # exit(1)
 
     eval_stream(0)
-    exit(1)
 
     # eval_stream(os.path.dirname(__file__) + '/video.mp4')
-    eval_img(os.path.dirname(__file__) + '/../street_sign_eval/wb.jpg')
-    exit(1)
+    # eval_img(os.path.dirname(__file__) + '/../street_sign_eval/wb.jpg')
     # load image, any size
-
-    parser = argparse.ArgumentParser(description='Tries the models.')
-
-    parser.add_argument('files', metavar='Files', type=str, nargs='+', help='image files')
-
-    parser.add_argument('--sw', help='run the sliding window')
-
-    args = parser.parse_args()
-    print(args)
-    print(args.files)
-    if args.sw is None:
-        # no sliding window
-        pass
-    else:
-        # sliding window
-        eval_stream(0)

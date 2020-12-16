@@ -37,21 +37,16 @@ class CnnClassifier(NNTrainLoadSave):
             nn.ReLU(),
             nn.BatchNorm2d(fe_conv_a_channels),
             nn.MaxPool2d(2),
-
             ########################################
-
             nn.Conv2d(fe_conv_a_channels, fe_conv_b_channels, 3),
             nn.ReLU(),
             nn.BatchNorm2d(fe_conv_b_channels),
             nn.MaxPool2d(2),
-
             ########################################
-
             nn.Conv2d(fe_conv_b_channels, fe_conv_c_channels, 3),
             nn.ReLU(),
             nn.BatchNorm2d(fe_conv_c_channels),
             nn.MaxPool2d(2),
-
         )
 
         n2: int = 200
@@ -62,15 +57,11 @@ class CnnClassifier(NNTrainLoadSave):
             nn.Linear(200, n2),
             nn.ReLU(),
             nn.BatchNorm1d(n2),
-
             ########################################
-
             nn.Linear(n2, n3),
             nn.ReLU(),
             nn.BatchNorm1d(n3),
-
             ########################################
-
             nn.Linear(n3, output_size),
         )
 
