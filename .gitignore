@@ -19,3 +19,4 @@ venv/
 /street_sign_eval/
 /out/
 /debug/
+/src/dataset/GTSRB_Negative/

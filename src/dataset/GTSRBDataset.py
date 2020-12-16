@@ -1,28 +1,28 @@
 import csv
+import json
 import os
+import random
 
-from torch.utils.data import Dataset, random_split
-# https://sid.erda.dk/public/archives/daaeac0d7ce1152aea9b61d9f1e19370/published-archive.html
+from torch.utils.data import Dataset
 from torchvision.transforms import Compose
 
-from src.custom_transformations.Augmentation import Augmentation
 from src.dataset.ImageAsset import ImageAsset
 
 
+# https://sid.erda.dk/public/archives/daaeac0d7ce1152aea9b61d9f1e19370/published-archive.html
 class GTSRBDataset(Dataset):
-    CLASS_ID_DICT_KEY: str = "ClassId"
+    NO_STREET_SIGN_LABEL_IDX: int = 43
 
     def __init__(self,
                  transformation_cascade=None,
                  augmentation_operations=None,
-                 evaluation: bool = False):
-        self.evaluation: bool = evaluation
-
-        self.base_path: str = os.path.dirname(__file__) + "/GTSRB/Final_{}/Images".format(
-            "Test" if evaluation else "Training")  # TODO check!!!!!
-
+                 negative_augmentation_operations=None,
+                 test: bool = False):
+        self.test: bool = test
         self.transformation_cascade: Compose = transformation_cascade
         self.positive_augmentation: list = [] if augmentation_operations is None else augmentation_operations
+        self.negative_augmentation_operations: list = [] if negative_augmentation_operations is None \
+            else negative_augmentation_operations
 
         """self.mult: int = 1
         for op in self.transformation_cascade.transforms:
@@ -31,9 +31,9 @@ class GTSRBDataset(Dataset):
         print(self.mult)
         exit(1)"""
 
-        print("GTSRBDataset will use",
-              len(self.positive_augmentation),
-              "augmentation operations on the images")
+        # print("GTSRBDataset will use",
+        #       len(self.positive_augmentation),
+        #       "augmentation operations on the images")
 
         self.images = self.get_images()
 
@@ -67,13 +67,18 @@ class GTSRBDataset(Dataset):
             'keep_right', 'keep_left',
             'roundabout',  # 0040
             'end_no_passing', 'end_no_passing_for_vehicles_3mt+',
+            #
+            'no_street_sign'
         ]
 
-    def get_images(self) -> list:
+    def get_street_sign_images(self) -> list:
         out = []
 
+        base_path: str = os.path.dirname(__file__) + "/GTSRB/Final_{}/Images".format(
+            "Test" if self.test else "Training")
+
         # positive examples: 43 street signs
-        for root, dirs, files in os.walk(self.base_path):
+        for root, dirs, files in os.walk(base_path):
             for name in files:
                 if name.endswith(".csv"):
                     full_path = root + "/" + name
@@ -86,16 +91,71 @@ class GTSRBDataset(Dataset):
                         # image duplicates with augmentation
                         for transformation_list in self.positive_augmentation:
                             out.append(ImageAsset.from_gtsrb_csv_image_record(csv_image_row, root, transformation_list))
+        return out
 
-        print("\ttest :" if self.evaluation else "\ttrain :", len(out), "positive examples")
+    @staticmethod
+    def get_not_street_sign_json_list(test: bool):
+        return os.path.dirname(__file__) + "/GTSRB_Negative/images_{}.json".format(
+            "test" if test else "training")
+
+    def get_not_street_sign_images(self) -> list:
+
+        out = []
+
+        with open(self.get_not_street_sign_json_list(self.test), 'r') as fp:
+            negative_filenames = json.load(fp)
+
+        # load for training  / test (same amount as positive examples)
+        # n_train_img = int(len(negative_filenames) * train_fraction)  # TODO check
+        # negative_filenames = negative_filenames[n_train_img:] if self.test else negative_filenames[:n_train_img]
+
+        base_path: str = os.path.dirname(__file__) + "/GTSRB_Negative/images/"
+        n_negative_examples = 0
+        for negative_filename in negative_filenames:
+
+            # image without augmentation
+            out.append(ImageAsset(base_path + negative_filename,
+                                  class_id=GTSRBDataset.NO_STREET_SIGN_LABEL_IDX,
+                                  cropping_rect=None))
+            n_negative_examples += 1
+
+            # image duplicates with augmentation
+            for transformation_list in self.negative_augmentation_operations:
+                n_negative_examples += 1
+                out.append(ImageAsset(base_path + negative_filename,
+                                      augmentation_operations=transformation_list,
+                                      class_id=GTSRBDataset.NO_STREET_SIGN_LABEL_IDX,
+                                      cropping_rect=None))
+
+        for i in range(0, 1000):  # random noise
+            out.append(ImageAsset("",
+                                  augmentation_operations=[],
+                                  class_id=GTSRBDataset.NO_STREET_SIGN_LABEL_IDX,
+                                  cropping_rect=None,
+                                  random_noise=True))
+        return out
+
+    def get_images(self) -> list:
+        out = []
+
+        # positive examples: 43 street signs
+        street_sign_images = self.get_street_sign_images()
+        out += street_sign_images
+
+        # negative examples: load from folder + random noise + chaotic transformations on real street signs
+        neg_e = self.get_not_street_sign_images()
+        out += neg_e
+
+        print("\ttest :" if self.test else "\ttrain :",
+              len(street_sign_images), "street signs and",
+              len(neg_e), "negative examples")
 
         return out
 
     def __len__(self) -> int:
-        return len(self.images)  # TODO * self.mult
+        return len(self.images)
 
     def __getitem__(self, idx: int):
-        # TODO idx = idx %  len(self.images)
 
         # called A LOT
         image: ImageAsset = self.images[idx]
@@ -112,28 +172,38 @@ class GTSRBDataset(Dataset):
 
     @staticmethod
     def get_training_evaluation_datasets(transformation_cascade, augmentation_operations,
-                                         training_fraction: float = 0.7):  # TODO check
+                                         negative_augmentation_operations):
 
-        if False:
-            full_dataset = GTSRBDataset(
-                transformation_cascade=transformation_cascade,
-                augmentation_operations=augmentation_operations)
+        training_set = GTSRBDataset(
+            transformation_cascade=transformation_cascade,
+            augmentation_operations=augmentation_operations,
+            negative_augmentation_operations=negative_augmentation_operations)
 
-            n: int = len(full_dataset)
-            n_train_img: int = int(n * training_fraction)
-            n_val_img: int = n - n_train_img
+        test_set = GTSRBDataset(
+            test=True,
+            transformation_cascade=transformation_cascade,
+            augmentation_operations=augmentation_operations,
+            negative_augmentation_operations=negative_augmentation_operations)
 
-            return random_split(full_dataset, (n_train_img, n_val_img))
+        return training_set, test_set
 
-        else:
+    @staticmethod
+    def add_images_to_negative_examples_json(filenames: list, overwrite: bool, test: bool):
 
-            training_set = GTSRBDataset(
-                transformation_cascade=transformation_cascade,
-                augmentation_operations=augmentation_operations)
+        negative_json = GTSRBDataset.get_not_street_sign_json_list(test)
 
-            test_set = GTSRBDataset(
-                evaluation=True,
-                transformation_cascade=transformation_cascade,
-                augmentation_operations=augmentation_operations)
+        if not overwrite:
+            if os.path.isfile(negative_json):
+                with open(negative_json, 'r') as fp:
+                    filenames += json.load(fp)
 
-            return training_set, test_set
+        filenames = list(dict.fromkeys(filenames))  # remove duplicates
+        random.shuffle(filenames)
+
+        if os.path.isfile(negative_json):
+            os.remove(negative_json)
+
+        print("Saving {} negative examples to {}".format(len(filenames), negative_json))
+
+        with open(negative_json, 'w') as fp:
+            json.dump(filenames, fp)
