@@ -92,6 +92,8 @@ def eval_stream(stream, font=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.3, color=(0, 
     classifier.load_from_file()
 
     cap = cv2.VideoCapture(stream)
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
     _, cv2_img = cap.read()  # fetch first frame
     fa = FrameAnalyzer(device, width=cv2_img.shape[1], height=cv2_img.shape[0])
 
@@ -155,7 +157,7 @@ if __name__ == '__main__':
     # bootstrap()
     # train_classifier_bootstrap()
 
-    # eval_stream(0)
+    eval_stream(0)
 
     # eval_stream(os.path.dirname(__file__) + '/video.mp4')
-    eval_img(os.path.dirname(__file__) + '/../street_sign_eval/wb.jpg')
+    # eval_img(os.path.dirname(__file__) + '/../street_sign_eval/wb.jpg')
