@@ -59,11 +59,10 @@ class Trainer(object):
             "running_losses": []
         }
 
-        plt.ion()
-        ax = plt.axes()
-        ax.set_ylim([0, 1])
-
         if ui:
+            plt.ion()
+            ax = plt.axes()
+            ax.set_ylim([0, 1])
             ax.plot([d["test_loss"] for d in summary["training"]])
             plt.draw()
             plt.pause(0.1)

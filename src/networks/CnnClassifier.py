@@ -51,8 +51,9 @@ class CnnClassifier(NNTrainLoadSave):
         )
 
         n2: int = 200
-        n3: int = 43
-        output_size: int = len(GTSRBDataset.get_label_names())  # includes "no street sign"
+        n3: int = len(GTSRBDataset.get_label_names()) - 1
+        output_size: int = len(GTSRBDataset.get_label_names())
+        # includes "no street sign"
 
         self.classifier = nn.Sequential(
             nn.Linear(200, n2),
@@ -75,7 +76,7 @@ class CnnClassifier(NNTrainLoadSave):
         x = self.classifier(x)
         return x
 
-    def train_model(self, learning_rate=0.5, momentum=0.9, batch_size: int = 2000, weight_decay=0.0001,
+    def train_model(self, learning_rate=0.5, momentum=0.9, batch_size: int = 5000, weight_decay=0.0001,
                     max_epochs: int = 25, max_patience: int = 15):
         print("Training CnnClassifier model...")
         print("\tImg size :", self.PATCH_SIZE)
