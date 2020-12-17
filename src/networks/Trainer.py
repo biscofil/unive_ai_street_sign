@@ -1,6 +1,7 @@
 import json
 import time
 
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -31,7 +32,7 @@ class Trainer(object):
         self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         self.validation_loader = DataLoader(validation_dataset, batch_size=batch_size, shuffle=False)
 
-    def train(self, max_epochs: int, max_patience: int) -> None:
+    def train(self, max_epochs: int, max_patience: int, ui: bool = False) -> None:
 
         print("\tEpochs :", max_epochs)
         print("\tLearning Rate :", self.learning_rate)
@@ -57,6 +58,15 @@ class Trainer(object):
             }],
             "running_losses": []
         }
+
+        plt.ion()
+        ax = plt.axes()
+        ax.set_ylim([0, 1])
+
+        if ui:
+            ax.plot([d["test_loss"] for d in summary["training"]])
+            plt.draw()
+            plt.pause(0.1)
 
         n = len(self.train_loader.dataset)
 
@@ -139,9 +149,14 @@ class Trainer(object):
                     print("patience = 0")
                     break  # quit
 
+            if ui:
+                ax.plot([d["test_loss"] for d in summary["training"]])
+                plt.draw()
+                plt.pause(0.1)
+
         # restore best
         self.model.load_state_dict(state_dict)
-        #self.model.plot_layer(self.model.feature_extractor[0], 'conv1.png')
+        # self.model.plot_layer(self.model.feature_extractor[0], 'conv1.png')
 
         filename = 'out_{}.json'.format(time.strftime("%Y%m%d-%H%M%S"))
         with open(filename, 'w') as fp:

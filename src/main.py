@@ -155,8 +155,7 @@ if __name__ == '__main__':
     # bootstrap()
     # train_classifier_bootstrap()
 
-    eval_stream(0)
+    # eval_stream(0)
 
     # eval_stream(os.path.dirname(__file__) + '/video.mp4')
-    # eval_img(os.path.dirname(__file__) + '/../street_sign_eval/wb.jpg')
-    # load image, any size
+    eval_img(os.path.dirname(__file__) + '/../street_sign_eval/wb.jpg')

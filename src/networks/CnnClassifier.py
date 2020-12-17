@@ -14,6 +14,7 @@ from src.custom_transformations.AugRotate import AugRotate
 from src.custom_transformations.CustomCrop import CustomCrop
 from src.custom_transformations.CustomRescale import CustomRescale
 from src.custom_transformations.CustomToGrayScale import CustomToGrayScale
+from src.custom_transformations.NormalizeHist import NormalizeHist
 from src.dataset.GTSRBDataset import GTSRBDataset
 from src.networks.Trainer import Trainer
 from src.networks.utils.NNTrainLoadSave import NNTrainLoadSave
@@ -28,8 +29,8 @@ class CnnClassifier(NNTrainLoadSave):
         self.device_name = device_name
         self.device = torch.device(device_name)
 
-        fe_conv_a_channels = 30  # features
-        fe_conv_b_channels = 40  # features
+        fe_conv_a_channels = 15  # features
+        fe_conv_b_channels = 50  # features
         fe_conv_c_channels = 50  # features
 
         self.feature_extractor = nn.Sequential(
@@ -50,7 +51,7 @@ class CnnClassifier(NNTrainLoadSave):
         )
 
         n2: int = 200
-        n3: int = 200
+        n3: int = 43
         output_size: int = len(GTSRBDataset.get_label_names())  # includes "no street sign"
 
         self.classifier = nn.Sequential(
@@ -84,7 +85,7 @@ class CnnClassifier(NNTrainLoadSave):
             AugMoveCroppingRect(),  # ---> {"image": PIL, "rect": rect} --->
             CustomCrop(),  # ---> cropped PIL --->
             CustomRescale(self.PATCH_SIZE),  # ---> square img_size x img_size PIL --->
-            # NormalizeHist(),  # ---> PIL --->  # with :97%, without: 96-97%
+            NormalizeHist(),  # ---> PIL --->  # with :97%, without: 96-97%
             CustomToGrayScale(),
             # Rgb2Hsl??
             transforms.ToTensor(),  # ---> Tensor --->
